@@ -1,0 +1,423 @@
+// Variabel Global
+let count = 0;
+let target = 33;
+let currentDzikir = "Subhanallah";
+let dzikirList = ["Subhanallah", "Alhamdulillah", "Allahu Akbar", "Astaghfirullah"];
+let stats = {
+    today: 0,
+    week: 0,
+    total: 0,
+    lastDate: '',
+    history: [] // Format: { date: "DD/MM/YYYY", time: "HH:MM", dzikir: "Subhanallah", count: 1 }
+};
+
+// Elemen DOM
+const counterElement = document.getElementById('counter');
+const targetInput = document.getElementById('target-input');
+const targetDisplay = document.getElementById('target-display');
+const progressBar = document.getElementById('progress-bar');
+const notification = document.getElementById('notification');
+const tasbihCircle = document.querySelector('.tasbih-circle');
+const dzikirTypeSelect = document.getElementById('dzikir-type');
+const customDzikirInput = document.getElementById('custom-dzikir');
+const addDzikirBtn = document.getElementById('add-dzikir');
+const menuToggle = document.querySelector('.menu-toggle');
+const navMenu = document.querySelector('.nav-menu');
+const dzikirListContainer = document.getElementById('dzikirListContainer');
+const todayCountElement = document.getElementById('todayCount');
+const todayDateElement = document.getElementById('todayDate');
+const weekCountElement = document.getElementById('weekCount');
+const totalCountElement = document.getElementById('totalCount');
+const recentHistory = document.getElementById('recentHistory');
+const dzikirChartCtx = document.getElementById('dzikirChart').getContext('2d');
+const sections = document.querySelectorAll('section');
+const navLinks = document.querySelectorAll('.nav-menu a');
+
+// Inisialisasi Aplikasi
+function init() {
+    loadFromStorage();
+    createBeads();
+    setupEventListeners();
+    updateDisplay();
+    renderDzikirList();
+    renderStats();
+    setupNavigation();
+    setupChart();
+}
+
+// Setup Navigation
+function setupNavigation() {
+    // Menu toggle mobile
+    menuToggle.addEventListener('click', () => {
+        navMenu.classList.toggle('active');
+        menuToggle.innerHTML = navMenu.classList.contains('active') ? 
+            '<i class="fas fa-times"></i>' : '<i class="fas fa-bars"></i>';
+    });
+
+    // Section navigation
+    navLinks.forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            const targetId = link.getAttribute('href');
+            showSection(targetId);
+            
+            // Close mobile menu if open
+            navMenu.classList.remove('active');
+            menuToggle.innerHTML = '<i class="fas fa-bars"></i>';
+        });
+    });
+}
+
+function showSection(sectionId) {
+    sections.forEach(section => {
+        section.classList.remove('active-section');
+        section.classList.add('hidden-section');
+    });
+    
+    const targetSection = document.querySelector(sectionId);
+    if (targetSection) {
+        targetSection.classList.remove('hidden-section');
+        targetSection.classList.add('active-section');
+        
+        // Jika masuk ke section statistik, update chart
+        if (sectionId === '#statistik') {
+            updateChart();
+        }
+    }
+}
+
+// Setup Event Listeners
+function setupEventListeners() {
+    // Klik tasbih
+    tasbihCircle.addEventListener('click', incrementCounter);
+    
+    // Set target
+    document.getElementById('set-target').addEventListener('click', setTarget);
+    
+    // Reset counter
+    document.getElementById('reset-btn').addEventListener('click', confirmReset);
+    
+    // Dropdown dzikir
+    dzikirTypeSelect.addEventListener('change', handleDzikirChange);
+    addDzikirBtn.addEventListener('click', addCustomDzikir);
+}
+
+// Fungsi Utama
+function incrementCounter() {
+    count++;
+    
+    // Update stats
+    updateStats();
+    
+    // Update butir aktif
+    const activeIndex = (count - 1) % 33;
+    document.querySelectorAll('.bead').forEach((bead, index) => {
+        if (index === activeIndex) {
+            bead.classList.add('active');
+            setTimeout(() => bead.classList.remove('active'), 300);
+        }
+    });
+    
+    // Cek jika mencapai target
+    if (count === target) {
+        showNotification(`Target ${target} ${currentDzikir} telah tercapai!`);
+    }
+    
+    updateDisplay();
+    saveToStorage();
+}
+
+function setTarget() {
+    const newTarget = parseInt(targetInput.value);
+    if (newTarget > 0) {
+        target = newTarget;
+        targetDisplay.textContent = target;
+        showNotification(`Target diubah menjadi ${target}`);
+        updateDisplay();
+        saveToStorage();
+    } else {
+        showNotification('Target harus lebih dari 0', 'error');
+    }
+}
+
+function confirmReset() {
+    if (confirm('Apakah Anda yakin ingin mereset hitungan?')) {
+        count = 0;
+        updateDisplay();
+        saveToStorage();
+        showNotification('Hitungan telah direset');
+    }
+}
+
+function handleDzikirChange() {
+    if (dzikirTypeSelect.value === 'custom') {
+        customDzikirInput.style.display = 'inline-block';
+    } else {
+        customDzikirInput.style.display = 'none';
+        currentDzikir = dzikirTypeSelect.value;
+        showNotification(`Dzikir diubah ke: ${currentDzikir}`);
+        saveToStorage();
+    }
+}
+
+function addCustomDzikir() {
+    const newDzikir = customDzikirInput.value.trim();
+    if (newDzikir && !dzikirList.includes(newDzikir)) {
+        dzikirList.push(newDzikir);
+        
+        // Tambahkan ke dropdown
+        const option = document.createElement('option');
+        option.value = newDzikir;
+        option.textContent = newDzikir;
+        dzikirTypeSelect.insertBefore(option, dzikirTypeSelect.lastChild);
+        
+        // Pilih yang baru ditambahkan
+        dzikirTypeSelect.value = newDzikir;
+        currentDzikir = newDzikir;
+        customDzikirInput.value = '';
+        customDzikirInput.style.display = 'none';
+        
+        showNotification(`Dzikir "${newDzikir}" ditambahkan`);
+        saveToStorage();
+        renderDzikirList();
+    } else if (dzikirList.includes(newDzikir)) {
+        showNotification('Dzikir ini sudah ada', 'error');
+    }
+}
+
+// Statistik Functions
+function updateStats() {
+    const now = new Date();
+    const todayDate = now.toLocaleDateString('id-ID'); // Format: DD/MM/YYYY
+    const currentTime = now.toLocaleTimeString('id-ID', { 
+        hour: '2-digit', 
+        minute: '2-digit' 
+    }); // Format: 08:30
+    
+    // 1. Update total count
+    stats.total++;
+    
+    // 2. Reset counter hari ini jika sudah ganti tanggal
+    if (stats.lastDate !== todayDate) {
+        stats.today = 0;
+        stats.lastDate = todayDate;
+    }
+    stats.today++;
+    
+    // 3. Update history
+    stats.history.push({
+        date: todayDate,
+        time: currentTime,
+        dzikir: currentDzikir,
+        count: 1
+    });
+    
+    // 4. Hitung total minggu ini (7 hari terakhir)
+    const oneWeekAgo = new Date(now);
+    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+    
+    stats.week = stats.history
+        .filter(entry => {
+            const entryDate = new Date(entry.date.split('/').reverse().join('-'));
+            return entryDate >= oneWeekAgo;
+        })
+        .reduce((sum, entry) => sum + entry.count, 0);
+    
+    renderStats();
+    updateChart();
+}
+
+function renderStats() {
+    // Update tampilan card
+    todayCountElement.textContent = stats.today;
+    todayDateElement.textContent = stats.lastDate || 'Belum ada aktivitas';
+    weekCountElement.textContent = stats.week;
+    totalCountElement.textContent = stats.total;
+    
+    // Update riwayat terakhir
+    recentHistory.innerHTML = '';
+    
+    const lastEntries = stats.history.slice(-5).reverse(); // Ambil 5 terbaru
+    
+    lastEntries.forEach(entry => {
+        const li = document.createElement('li');
+        li.innerHTML = `
+            <span>${entry.dzikir}</span>
+            <span>${entry.date} ${entry.time}</span>
+        `;
+        recentHistory.appendChild(li);
+    });
+}
+
+function setupChart() {
+    window.dzikirChart = new Chart(dzikirChartCtx, {
+        type: 'bar',
+        data: {
+            labels: ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'],
+            datasets: [{
+                label: 'Jumlah Dzikir',
+                data: [0, 0, 0, 0, 0, 0, 0],
+                backgroundColor: 'rgba(46, 125, 50, 0.7)',
+                borderColor: 'rgba(46, 125, 50, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Jumlah Dzikir'
+                    }
+                },
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Hari dalam Minggu'
+                    }
+                }
+            }
+        }
+    });
+}
+
+function updateChart() {
+    // Siapkan data per hari dalam minggu
+    const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+    const dayCounts = [0, 0, 0, 0, 0, 0, 0];
+    
+    // Hitung per hari
+    stats.history.forEach(entry => {
+        const entryDate = new Date(entry.date.split('/').reverse().join('-'));
+        const dayOfWeek = entryDate.getDay(); // 0=Minggu, 6=Sabtu
+        dayCounts[dayOfWeek] += entry.count;
+    });
+    
+    // Update chart
+    dzikirChart.data.datasets[0].data = dayCounts;
+    dzikirChart.update();
+}
+
+// Dzikir List
+function renderDzikirList() {
+    dzikirListContainer.innerHTML = '';
+    
+    const commonDzikir = [
+        {
+            title: "Subhanallah",
+            description: "Maha Suci Allah (dibaca 33x)"
+        },
+        {
+            title: "Alhamdulillah",
+            description: "Segala puji bagi Allah (dibaca 33x)"
+        },
+        {
+            title: "Allahu Akbar",
+            description: "Allah Maha Besar (dibaca 33x)"
+        },
+        {
+            title: "Astaghfirullah",
+            description: "Aku memohon ampun kepada Allah"
+        },
+        {
+            title: "La ilaha illallah",
+            description: "Tiada Tuhan selain Allah"
+        }
+    ];
+    
+    const allDzikir = [...commonDzikir, ...dzikirList.filter(d => !commonDzikir.some(c => c.title === d)).map(d => ({
+        title: d,
+        description: "Dzikir tambahan"
+    }))];
+    
+    allDzikir.forEach(dzikir => {
+        const card = document.createElement('div');
+        card.className = 'dzikir-card';
+        card.innerHTML = `
+            <h3>${dzikir.title}</h3>
+            <p>${dzikir.description}</p>
+        `;
+        dzikirListContainer.appendChild(card);
+    });
+}
+
+// Butir Tasbih
+function createBeads() {
+    const angleIncrement = (2 * Math.PI) / 33;
+    const radius = 120;
+    
+    for (let i = 0; i < 33; i++) {
+        const bead = document.createElement('div');
+        bead.className = 'bead';
+        
+        const angle = i * angleIncrement;
+        const x = radius * Math.cos(angle);
+        const y = radius * Math.sin(angle);
+        
+        bead.style.left = `calc(50% + ${x}px)`;
+        bead.style.top = `calc(50% + ${y}px)`;
+        bead.style.transform = `translate(-50%, -50%) rotate(${angle}rad)`;
+        
+        tasbihCircle.appendChild(bead);
+    }
+}
+
+// Update Tampilan
+function updateDisplay() {
+    counterElement.textContent = count;
+    const progress = Math.min((count / target) * 100, 100);
+    progressBar.style.width = `${progress}%`;
+    
+    // Update warna progress bar
+    progressBar.style.backgroundColor = progress >= 100 ? '#4caf50' : 'var(--primary)';
+}
+
+function showNotification(message, type = 'success') {
+    notification.textContent = message;
+    notification.className = `notification ${type}`;
+    notification.classList.add('show');
+    
+    setTimeout(() => {
+        notification.classList.remove('show');
+    }, 3000);
+}
+
+// Penyimpanan Local Storage
+function saveToStorage() {
+    const data = {
+        count,
+        target,
+        currentDzikir,
+        dzikirList,
+        stats
+    };
+    localStorage.setItem('tasbihData', JSON.stringify(data));
+}
+
+function loadFromStorage() {
+    const savedData = localStorage.getItem('tasbihData');
+    if (savedData) {
+        const data = JSON.parse(savedData);
+        count = data.count || 0;
+        target = data.target || 33;
+        currentDzikir = data.currentDzikir || "Subhanallah";
+        dzikirList = data.dzikirList || ["Subhanallah", "Alhamdulillah", "Allahu Akbar", "Astaghfirullah"];
+        stats = data.stats || {
+            today: 0,
+            week: 0,
+            total: 0,
+            lastDate: '',
+            history: []
+        };
+        
+        // Update UI
+        targetInput.value = target;
+        targetDisplay.textContent = target;
+        dzikirTypeSelect.value = currentDzikir;
+    }
+}
+
+// Jalankan Aplikasi
+document.addEventListener('DOMContentLoaded', init);

@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tasbih Digital</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="navbar-container">
+            <a href="#" class="logo">Tasbih<span>Digital</span></a>
+            <button class="menu-toggle" aria-label="Toggle menu">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-menu">
+                <li><a href="#beranda"><i class="fas fa-home"></i> Beranda</a></li>
+                <li><a href="#dzikir"><i class="fas fa-book-quran"></i> Dzikir</a></li>
+                <li><a href="#statistik"><i class="fas fa-chart-bar"></i> Statistik</a></li>
+                <li><a href="#panduan"><i class="fas fa-info-circle"></i> Panduan</a></li>
+                <li><a href="#tentang"><i class="fas fa-question-circle"></i> Tentang</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main class="container">
+        <!-- Section Beranda -->
+        <section id="beranda" class="active-section">
+            <div class="tasbih-card">
+                <h1>Tasbih Digital</h1>
+                
+                <div class="target-control">
+                    <label for="target-input">Target Dzikir:</label>
+                    <input type="number" id="target-input" min="1" value="33">
+                    <button id="set-target">Set</button>
+                </div>
+                
+                <div class="dzikir-selector">
+                    <select id="dzikir-type">
+                        <option value="Subhanallah">Subhanallah</option>
+                        <option value="Alhamdulillah">Alhamdulillah</option>
+                        <option value="Allahu Akbar">Allahu Akbar</option>
+                        <option value="Astaghfirullah">Astaghfirullah</option>
+                        <option value="custom">Tambah Dzikir Baru</option>
+                    </select>
+                    <input type="text" id="custom-dzikir" placeholder="Nama dzikir baru" style="display:none;">
+                    <button id="add-dzikir">+</button>
+                </div>
+                
+                <div class="tasbih-container">
+                    <div class="tasbih-circle">
+                        <div class="tasbih-center">
+                            <div class="click-text">KLIK</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="counter-display">
+                    <span id="counter">0</span> / <span id="target-display">33</span>
+                </div>
+                
+                <div class="progress-container">
+                    <div class="progress-bar" id="progress-bar"></div>
+                </div>
+                
+                <div class="controls">
+                    <button id="reset-btn" class="btn-reset">
+                        <i class="fas fa-redo"></i> Reset
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section Dzikir -->
+        <section id="dzikir" class="hidden-section">
+            <h2><i class="fas fa-book-quran"></i> Kumpulan Dzikir</h2>
+            <div class="dzikir-list" id="dzikirListContainer">
+                <!-- Daftar dzikir akan diisi oleh JavaScript -->
+            </div>
+        </section>
+
+        <!-- Section Statistik -->
+        <section id="statistik" class="hidden-section">
+            <h2><i class="fas fa-chart-bar"></i> Statistik Dzikir</h2>
+            <div class="stats-container">
+                <div class="stat-card">
+                    <h3>Hari Ini</h3>
+                    <p id="todayCount">0</p>
+                    <small id="todayDate">-</small>
+                </div>
+                <div class="stat-card">
+                    <h3>Minggu Ini</h3>
+                    <p id="weekCount">0</p>
+                </div>
+                <div class="stat-card">
+                    <h3>Total</h3>
+                    <p id="totalCount">0</p>
+                </div>
+            </div>
+            <canvas id="dzikirChart" width="400" height="300"></canvas>
+            <div class="history-container">
+                <h3><i class="fas fa-history"></i> Riwayat 5 Terakhir</h3>
+                <ul id="recentHistory" class="history-list"></ul>
+            </div>
+        </section>
+
+        <!-- Section Panduan -->
+        <section id="panduan" class="hidden-section">
+            <h2><i class="fas fa-info-circle"></i> Panduan Penggunaan</h2>
+            <div class="guide-container">
+                <div class="guide-card">
+                    <h3><i class="fas fa-mobile-alt"></i> Cara Menggunakan</h3>
+                    <ol>
+                        <li>Pilih dzikir dari dropdown atau tambahkan dzikir baru</li>
+                        <li>Atur target jumlah dzikir yang ingin dicapai</li>
+                        <li>Klik pada lingkaran tasbih untuk menambah hitungan</li>
+                        <li>Gunakan tombol reset untuk mengulang hitungan</li>
+                    </ol>
+                </div>
+                <div class="guide-card">
+                    <h3><i class="fas fa-lightbulb"></i> Tips</h3>
+                    <ul>
+                        <li>Anda bisa menggeser layar untuk navigasi menu</li>
+                        <li>Aktifkan mode getar untuk notifikasi saat target tercapai</li>
+                        <li>Statistik akan membantu melacak perkembangan ibadah</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section Tentang -->
+        <section id="tentang" class="hidden-section">
+            <h2><i class="fas fa-question-circle"></i> Tentang Aplikasi</h2>
+            <div class="about-container">
+                <div class="about-card">
+                    <h3>Tasbih Digital</h3>
+                    <p>Aplikasi ini dikembangkan untuk memudahkan umat Muslim dalam berdzikir dan menghitung tasbih secara digital. Dengan antarmuka yang sederhana dan fitur yang lengkap, Anda dapat beribadah dengan lebih khusyuk.</p>
+                    <p><strong>Versi:</strong> 2.0.0</p>
+                    <p><strong>Fitur Baru:</strong> Pencatatan waktu dan statistik lengkap</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <div class="notification" id="notification"></div>
+
+    <script src="script.js"></script>
+</body>
+</html>
