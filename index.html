@@ -1,151 +1,428 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tasbih Digital</title>
-    <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-</head>
-<body>
-    <nav class="navbar">
-        <div class="navbar-container">
-            <a href="#" class="logo">Tasbih<span>Digital</span></a>
-            <button class="menu-toggle" aria-label="Toggle menu">
-                <i class="fas fa-bars"></i>
-            </button>
-            <ul class="nav-menu">
-                <li><a href="#beranda"><i class="fas fa-home"></i> Beranda</a></li>
-                <li><a href="#dzikir"><i class="fas fa-book-quran"></i> Dzikir</a></li>
-                <li><a href="#statistik"><i class="fas fa-chart-bar"></i> Statistik</a></li>
-                <li><a href="#panduan"><i class="fas fa-info-circle"></i> Panduan</a></li>
-                <li><a href="#tentang"><i class="fas fa-question-circle"></i> Tentang</a></li>
-            </ul>
-        </div>
-    </nav>
+// Variabel Global
+let count = 0;
+let target = 33;
+let currentDzikir = "Subhanallah";
+let dzikirList = ["Subhanallah", "Alhamdulillah", "Allahu Akbar", "Astaghfirullah"];
+let stats = {
+    today: 0,
+    week: 0,
+    total: 0,
+    lastDate: '',
+    history: [] // Format: { date: "DD/MM/YYYY", time: "HH:MM", dzikir: "Subhanallah", count: 1 }
+};
 
-    <main class="container">
-        <!-- Section Beranda -->
-        <section id="beranda" class="active-section">
-            <div class="tasbih-card">
-                <h1>Tasbih Digital</h1>
-                
-                <div class="target-control">
-                    <label for="target-input">Target Dzikir:</label>
-                    <input type="number" id="target-input" min="1" value="33">
-                    <button id="set-target">Set</button>
-                </div>
-                
-                <div class="dzikir-selector">
-                    <select id="dzikir-type">
-                        <option value="Subhanallah">Subhanallah</option>
-                        <option value="Alhamdulillah">Alhamdulillah</option>
-                        <option value="Allahu Akbar">Allahu Akbar</option>
-                        <option value="Astaghfirullah">Astaghfirullah</option>
-                        <option value="custom">Tambah Dzikir Baru</option>
-                    </select>
-                    <input type="text" id="custom-dzikir" placeholder="Nama dzikir baru" style="display:none;">
-                    <button id="add-dzikir">+</button>
-                </div>
-                
-                <div class="tasbih-container">
-                    <div class="tasbih-circle">
-                        <div class="tasbih-center">
-                            <div class="click-text">KLIK</div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="counter-display">
-                    <span id="counter">0</span> / <span id="target-display">33</span>
-                </div>
-                
-                <div class="progress-container">
-                    <div class="progress-bar" id="progress-bar"></div>
-                </div>
-                
-                <div class="controls">
-                    <button id="reset-btn" class="btn-reset">
-                        <i class="fas fa-redo"></i> Reset
-                    </button>
-                </div>
-            </div>
-        </section>
+// Elemen DOM
+const counterElement = document.getElementById('counter');
+const targetInput = document.getElementById('target-input');
+const targetDisplay = document.getElementById('target-display');
+const progressBar = document.getElementById('progress-bar');
+const notification = document.getElementById('notification');
+const dhikrWrapper = document.querySelector('.dhikr-wrapper');
+const beadsContainer = document.getElementById('beads-container');
+const dzikirTypeSelect = document.getElementById('dzikir-type');
+const customDzikirInput = document.getElementById('custom-dzikir');
+const addDzikirBtn = document.getElementById('add-dzikir');
+const menuToggle = document.querySelector('.menu-toggle');
+const navMenu = document.querySelector('.nav-menu');
+const dzikirListContainer = document.getElementById('dzikirListContainer');
+const todayCountElement = document.getElementById('todayCount');
+const todayDateElement = document.getElementById('todayDate');
+const weekCountElement = document.getElementById('weekCount');
+const totalCountElement = document.getElementById('totalCount');
+const recentHistory = document.getElementById('recentHistory');
+const dzikirChartCtx = document.getElementById('dzikirChart').getContext('2d');
+const sections = document.querySelectorAll('section');
+const navLinks = document.querySelectorAll('.nav-menu a');
 
-        <!-- Section Dzikir -->
-        <section id="dzikir" class="hidden-section">
-            <h2><i class="fas fa-book-quran"></i> Kumpulan Dzikir</h2>
-            <div class="dzikir-list" id="dzikirListContainer">
-                <!-- Daftar dzikir akan diisi oleh JavaScript -->
-            </div>
-        </section>
+// Inisialisasi Aplikasi
+function init() {
+    loadFromStorage();
+    createBeads();
+    setupEventListeners();
+    updateDisplay();
+    renderDzikirList();
+    renderStats();
+    setupNavigation();
+    setupChart();
+}
 
-        <!-- Section Statistik -->
-        <section id="statistik" class="hidden-section">
-            <h2><i class="fas fa-chart-bar"></i> Statistik Dzikir</h2>
-            <div class="stats-container">
-                <div class="stat-card">
-                    <h3>Hari Ini</h3>
-                    <p id="todayCount">0</p>
-                    <small id="todayDate">-</small>
-                </div>
-                <div class="stat-card">
-                    <h3>Minggu Ini</h3>
-                    <p id="weekCount">0</p>
-                </div>
-                <div class="stat-card">
-                    <h3>Total</h3>
-                    <p id="totalCount">0</p>
-                </div>
-            </div>
-            <canvas id="dzikirChart" width="400" height="300"></canvas>
-            <div class="history-container">
-                <h3><i class="fas fa-history"></i> Riwayat 5 Terakhir</h3>
-                <ul id="recentHistory" class="history-list"></ul>
-            </div>
-        </section>
+// Buat butir dhikr
+function createBeads() {
+    beadsContainer.innerHTML = '';
+    
+    for (let i = 0; i < 33; i++) {
+        const bead = document.createElement('div');
+        const angle = (360 / 33) * i;
+        const radius = 110;
+        
+        bead.style.left = `${125 + radius * Math.cos(angle * Math.PI / 180)}px`;
+        bead.style.top = `${125 + radius * Math.sin(angle * Math.PI / 180)}px`;
+        bead.dataset.index = i;
+        
+        beadsContainer.appendChild(bead);
+    }
+}
 
-        <!-- Section Panduan -->
-        <section id="panduan" class="hidden-section">
-            <h2><i class="fas fa-info-circle"></i> Panduan Penggunaan</h2>
-            <div class="guide-container">
-                <div class="guide-card">
-                    <h3><i class="fas fa-mobile-alt"></i> Cara Menggunakan</h3>
-                    <ol>
-                        <li>Pilih dzikir dari dropdown atau tambahkan dzikir baru</li>
-                        <li>Atur target jumlah dzikir yang ingin dicapai</li>
-                        <li>Klik pada lingkaran tasbih untuk menambah hitungan</li>
-                        <li>Gunakan tombol reset untuk mengulang hitungan</li>
-                    </ol>
-                </div>
-                <div class="guide-card">
-                    <h3><i class="fas fa-lightbulb"></i> Tips</h3>
-                    <ul>
-                        <li>Anda bisa menggeser layar untuk navigasi menu</li>
-                        <li>Aktifkan mode getar untuk notifikasi saat target tercapai</li>
-                        <li>Statistik akan membantu melacak perkembangan ibadah</li>
-                    </ul>
-                </div>
-            </div>
-        </section>
+// Setup Navigation
+function setupNavigation() {
+    // Menu toggle mobile
+    menuToggle.addEventListener('click', () => {
+        navMenu.classList.toggle('active');
+        menuToggle.innerHTML = navMenu.classList.contains('active') ? 
+            '<i class="fas fa-times"></i>' : '<i class="fas fa-bars"></i>';
+    });
 
-        <!-- Section Tentang -->
-        <section id="tentang" class="hidden-section">
-            <h2><i class="fas fa-question-circle"></i> Tentang Aplikasi</h2>
-            <div class="about-container">
-                <div class="about-card">
-                    <h3>Tasbih Digital</h3>
-                    <p>Aplikasi ini dikembangkan untuk memudahkan umat Muslim dalam berdzikir dan menghitung tasbih secara digital. Dengan antarmuka yang sederhana dan fitur yang lengkap, Anda dapat beribadah dengan lebih khusyuk.</p>
-                    <p><strong>Versi:</strong> 2.0.0</p>
-                    <p><strong>Fitur Baru:</strong> Pencatatan waktu dan statistik lengkap</p>
-                </div>
-            </div>
-        </section>
-    </main>
+    // Section navigation
+    navLinks.forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            const targetId = link.getAttribute('href');
+            showSection(targetId);
+            
+            // Close mobile menu if open
+            navMenu.classList.remove('active');
+            menuToggle.innerHTML = '<i class="fas fa-bars"></i>';
+        });
+    });
+}
 
-    <div class="notification" id="notification"></div>
+function showSection(sectionId) {
+    sections.forEach(section => {
+        section.classList.remove('active-section');
+        section.classList.add('hidden-section');
+    });
+    
+    const targetSection = document.querySelector(sectionId);
+    if (targetSection) {
+        targetSection.classList.remove('hidden-section');
+        targetSection.classList.add('active-section');
+        
+        // Jika masuk ke section statistik, update chart
+        if (sectionId === '#statistik') {
+            updateChart();
+        }
+    }
+}
 
-    <script src="script.js"></script>
-</body>
-</html>
+// Setup Event Listeners
+function setupEventListeners() {
+    // Klik dhikr
+    dhikrWrapper.addEventListener('click', incrementCounter);
+    
+    // Set target
+    document.getElementById('set-target').addEventListener('click', setTarget);
+    
+    // Reset counter
+    document.getElementById('reset-btn').addEventListener('click', confirmReset);
+    
+    // Dropdown dzikir
+    dzikirTypeSelect.addEventListener('change', handleDzikirChange);
+    addDzikirBtn.addEventListener('click', addCustomDzikir);
+}
+
+// Fungsi Utama
+function incrementCounter() {
+    count++;
+    
+    // Update stats
+    updateStats();
+    
+    // Animasi putar dan butir aktif
+    const rotationDegree = count * (360 / 33);
+    dhikrWrapper.style.transform = `rotate(${rotationDegree}deg)`;
+    
+    const activeIndex = (count - 1) % 33;
+    document.querySelectorAll('.beads div').forEach((bead, index) => {
+        if (index === activeIndex) {
+            bead.classList.add('active');
+            setTimeout(() => bead.classList.remove('active'), 300);
+        }
+    });
+    
+    // Cek jika mencapai target
+    if (count === target) {
+        showNotification(`Target ${target} ${currentDzikir} telah tercapai!`);
+    }
+    
+    updateDisplay();
+    saveToStorage();
+}
+
+function setTarget() {
+    const newTarget = parseInt(targetInput.value);
+    if (newTarget > 0) {
+        target = newTarget;
+        targetDisplay.textContent = target;
+        showNotification(`Target diubah menjadi ${target}`);
+        updateDisplay();
+        saveToStorage();
+    } else {
+        showNotification('Target harus lebih dari 0', 'error');
+    }
+}
+
+function confirmReset() {
+    if (confirm('Apakah Anda yakin ingin mereset hitungan?')) {
+        count = 0;
+        dhikrWrapper.style.transform = 'rotate(0deg)';
+        updateDisplay();
+        saveToStorage();
+        showNotification('Hitungan telah direset');
+    }
+}
+
+function handleDzikirChange() {
+    if (dzikirTypeSelect.value === 'custom') {
+        customDzikirInput.style.display = 'inline-block';
+    } else {
+        customDzikirInput.style.display = 'none';
+        currentDzikir = dzikirTypeSelect.value;
+        showNotification(`Dzikir diubah ke: ${currentDzikir}`);
+        saveToStorage();
+    }
+}
+
+function addCustomDzikir() {
+    const newDzikir = customDzikirInput.value.trim();
+    if (newDzikir && !dzikirList.includes(newDzikir)) {
+        dzikirList.push(newDzikir);
+        
+        // Tambahkan ke dropdown
+        const option = document.createElement('option');
+        option.value = newDzikir;
+        option.textContent = newDzikir;
+        dzikirTypeSelect.insertBefore(option, dzikirTypeSelect.lastChild);
+        
+        // Pilih yang baru ditambahkan
+        dzikirTypeSelect.value = newDzikir;
+        currentDzikir = newDzikir;
+        customDzikirInput.value = '';
+        customDzikirInput.style.display = 'none';
+        
+        showNotification(`Dzikir "${newDzikir}" ditambahkan`);
+        saveToStorage();
+        renderDzikirList();
+    } else if (dzikirList.includes(newDzikir)) {
+        showNotification('Dzikir ini sudah ada', 'error');
+    }
+}
+
+// Statistik Functions
+function updateStats() {
+    const now = new Date();
+    const todayDate = now.toLocaleDateString('id-ID');
+    const currentTime = now.toLocaleTimeString('id-ID', { 
+        hour: '2-digit', 
+        minute: '2-digit' 
+    });
+    
+    // 1. Update total count
+    stats.total++;
+    
+    // 2. Reset counter hari ini jika sudah ganti tanggal
+    if (stats.lastDate !== todayDate) {
+        stats.today = 0;
+        stats.lastDate = todayDate;
+    }
+    stats.today++;
+    
+    // 3. Update history
+    stats.history.push({
+        date: todayDate,
+        time: currentTime,
+        dzikir: currentDzikir,
+        count: 1
+    });
+    
+    // 4. Hitung total minggu ini (7 hari terakhir)
+    const oneWeekAgo = new Date(now);
+    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+    
+    stats.week = stats.history
+        .filter(entry => {
+            const entryDate = new Date(entry.date.split('/').reverse().join('-'));
+            return entryDate >= oneWeekAgo;
+        })
+        .reduce((sum, entry) => sum + entry.count, 0);
+    
+    renderStats();
+    updateChart();
+}
+
+function renderStats() {
+    // Update tampilan card
+    todayCountElement.textContent = stats.today;
+    todayDateElement.textContent = stats.lastDate || 'Belum ada aktivitas';
+    weekCountElement.textContent = stats.week;
+    totalCountElement.textContent = stats.total;
+    
+    // Update riwayat terakhir
+    recentHistory.innerHTML = '';
+    
+    const lastEntries = stats.history.slice(-5).reverse();
+    
+    lastEntries.forEach(entry => {
+        const li = document.createElement('li');
+        li.innerHTML = `
+            <span>${entry.dzikir}</span>
+            <span>${entry.date} ${entry.time}</span>
+        `;
+        recentHistory.appendChild(li);
+    });
+}
+
+function setupChart() {
+    window.dzikirChart = new Chart(dzikirChartCtx, {
+        type: 'bar',
+        data: {
+            labels: ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'],
+            datasets: [{
+                label: 'Jumlah Dzikir',
+                data: [0, 0, 0, 0, 0, 0, 0],
+                backgroundColor: 'rgba(46, 125, 50, 0.7)',
+                borderColor: 'rgba(46, 125, 50, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Jumlah Dzikir'
+                    }
+                },
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Hari dalam Minggu'
+                    }
+                }
+            }
+        }
+    });
+}
+
+function updateChart() {
+    // Siapkan data per hari dalam minggu
+    const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+    const dayCounts = [0, 0, 0, 0, 0, 0, 0];
+    
+    // Hitung per hari
+    stats.history.forEach(entry => {
+        const entryDate = new Date(entry.date.split('/').reverse().join('-'));
+        const dayOfWeek = entryDate.getDay();
+        dayCounts[dayOfWeek] += entry.count;
+    });
+    
+    // Update chart
+    dzikirChart.data.datasets[0].data = dayCounts;
+    dzikirChart.update();
+}
+
+// Dzikir List
+function renderDzikirList() {
+    dzikirListContainer.innerHTML = '';
+    
+    const commonDzikir = [
+        {
+            title: "Subhanallah",
+            description: "Maha Suci Allah (dibaca 33x)"
+        },
+        {
+            title: "Alhamdulillah",
+            description: "Segala puji bagi Allah (dibaca 33x)"
+        },
+        {
+            title: "Allahu Akbar",
+            description: "Allah Maha Besar (dibaca 33x)"
+        },
+        {
+            title: "Astaghfirullah",
+            description: "Aku memohon ampun kepada Allah"
+        },
+        {
+            title: "La ilaha illallah",
+            description: "Tiada Tuhan selain Allah"
+        }
+    ];
+    
+    const allDzikir = [...commonDzikir, ...dzikirList.filter(d => !commonDzikir.some(c => c.title === d)).map(d => ({
+        title: d,
+        description: "Dzikir tambahan"
+    }))];
+    
+    allDzikir.forEach(dzikir => {
+        const card = document.createElement('div');
+        card.className = 'dzikir-card';
+        card.innerHTML = `
+            <h3>${dzikir.title}</h3>
+            <p>${dzikir.description}</p>
+        `;
+        dzikirListContainer.appendChild(card);
+    });
+}
+
+// Update Tampilan
+function updateDisplay() {
+    counterElement.textContent = count;
+    const progress = Math.min((count / target) * 100, 100);
+    progressBar.style.width = `${progress}%`;
+    
+    // Update warna progress bar
+    progressBar.style.backgroundColor = progress >= 100 ? '#4caf50' : 'var(--primary)';
+}
+
+function showNotification(message, type = 'success') {
+    notification.textContent = message;
+    notification.className = `notification ${type}`;
+    notification.classList.add('show');
+    
+    setTimeout(() => {
+        notification.classList.remove('show');
+    }, 3000);
+}
+
+// Penyimpanan Local Storage
+function saveToStorage() {
+    const data = {
+        count,
+        target,
+        currentDzikir,
+        dzikirList,
+        stats
+    };
+    localStorage.setItem('dhikrData', JSON.stringify(data));
+}
+
+function loadFromStorage() {
+    const savedData = localStorage.getItem('dhikrData');
+    if (savedData) {
+        const data = JSON.parse(savedData);
+        count = data.count || 0;
+        target = data.target || 33;
+        currentDzikir = data.currentDzikir || "Subhanallah";
+        dzikirList = data.dzikirList || ["Subhanallah", "Alhamdulillah", "Allahu Akbar", "Astaghfirullah"];
+        stats = data.stats || {
+            today: 0,
+            week: 0,
+            total: 0,
+            lastDate: '',
+            history: []
+        };
+        
+        // Update UI
+        targetInput.value = target;
+        targetDisplay.textContent = target;
+        dzikirTypeSelect.value = currentDzikir;
+        
+        // Set rotasi awal berdasarkan count yang disimpan
+        const rotationDegree = count * (360 / 33);
+        dhikrWrapper.style.transform = `rotate(${rotationDegree}deg)`;
+    }
+}
+
+// Jalankan Aplikasi
+document.addEventListener('DOMContentLoaded', init);
