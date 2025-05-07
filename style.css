@@ -6,6 +6,7 @@
     --text: #333;
     --text-light: #666;
     --white: #fff;
+    --gold: #ffd700;
     --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
@@ -103,8 +104,8 @@ section.active-section {
     to { opacity: 1; }
 }
 
-/* Tasbih Card */
-.tasbih-card {
+/* Dhikr Card */
+.dhikr-card {
     background-color: var(--white);
     border-radius: 10px;
     box-shadow: var(--shadow);
@@ -114,7 +115,7 @@ section.active-section {
     margin: 0 auto;
 }
 
-.tasbih-card h1 {
+.dhikr-card h1 {
     color: var(--primary);
     margin-bottom: 1.5rem;
 }
@@ -185,67 +186,74 @@ section.active-section {
     background-color: var(--primary-dark);
 }
 
-/* Tasbih Circle */
-.tasbih-container {
+/* Dhikr Wrapper */
+/* Updated CSS for the dhikr-wrapper and center-bead */
+.dhikr-wrapper {
     position: relative;
-    width: 300px;
-    height: 300px;
+    width: 250px;
+    height: 250px;
     margin: 0 auto 2rem;
+    cursor: pointer;
+    transition: transform 0.3s ease;
 }
 
-.tasbih-circle {
+.beads {
     position: relative;
     width: 100%;
     height: 100%;
-    border-radius: 50%;
-    background-color: #f0f0f0;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    cursor: pointer;
-    overflow: hidden;
-    box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.1);
+    transform: rotate(0deg); /* Reset rotation for beads */
 }
 
-.tasbih-center {
-    width: 100px;
-    height: 100px;
-    background-color: var(--primary);
+.beads div {
+    width: 12px;
+    height: 12px;
+    background: var(--primary);
     border-radius: 50%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    color: white;
-    font-weight: bold;
-    font-size: 1.2rem;
+    position: absolute;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+    transition: background-color 0.3s;
+    /* Position beads symmetrically */
+    transform: rotate(calc(var(--angle) * 1deg)) translate(110px) rotate(calc(var(--angle) * -1deg));
+}
+
+.center-bead {
+    width: 80px;
+    height: 80px;
+    background: var(--gold);
+    border-radius: 50%;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 0 10px var(--gold);
     z-index: 10;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
-    transition: transform 0.2s;
-}
-
-.tasbih-center:active {
-    transform: scale(0.95);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    /* Prevent rotation */
+    transform: translate(-50%, -50%) rotate(0deg) !important;
 }
 
 .click-text {
-    font-size: 1.5rem;
+    font-size: 1.2rem;
     font-weight: bold;
+    color: var(--primary-dark);
+    pointer-events: none;
+    /* Ensure text stays upright */
+    transform: rotate(0deg) !important;
 }
 
-.bead {
+.tail {
+    width: 10px;
+    height: 40px;
+    background: var(--primary);
     position: absolute;
-    width: 20px;
-    height: 20px;
-    background-color: var(--primary-light);
-    border-radius: 50%;
-    transform-origin: 150px;
-    box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
-    transition: background-color 0.3s;
-}
-
-.bead.active {
-    background-color: var(--primary-dark);
-    animation: beadActive 0.3s ease-out;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    border-radius: 10px;
+    /* Rotate with the wrapper */
+    transform: translateX(-50%) rotate(calc(var(--rotation) * 1deg));
 }
 
 @keyframes beadActive {
@@ -318,10 +326,16 @@ section.active-section {
     transform: translateX(200%);
     transition: transform 0.3s ease-out;
     z-index: 1000;
+    max-width: 300px;
+    word-wrap: break-word;
 }
 
 .notification.show {
     transform: translateX(0);
+}
+
+.notification.error {
+    background-color: #f44336;
 }
 
 /* Dzikir List Section */
@@ -494,16 +508,14 @@ section.active-section {
         margin: 0.5rem 0;
     }
     
-    .tasbih-container {
-        width: 250px;
-        height: 250px;
-    }
-    
-    .bead {
-        transform-origin: 125px;
-    }
-
     .stats-container {
         grid-template-columns: 1fr;
+    }
+    
+    .notification {
+        top: 80px;
+        right: 10px;
+        left: 10px;
+        max-width: calc(100% - 20px);
     }
 }
