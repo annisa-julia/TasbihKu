@@ -3,147 +3,162 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Digital Dhikr</title>
+    <title>TasbihKu - Penghitung Dzikir Digital</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="style.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
+    <!-- // NAVBAR UTAMA -->
     <nav class="navbar">
         <div class="navbar-container">
-            <a href="#" class="logo">Digital<span>Dhikr</span></a>
+            <a href="#" class="logo">Tasbih<span>Ku</span></a>
             <button class="menu-toggle" aria-label="Toggle menu">
                 <i class="fas fa-bars"></i>
             </button>
             <ul class="nav-menu">
                 <li><a href="#beranda"><i class="fas fa-home"></i> Beranda</a></li>
                 <li><a href="#dzikir"><i class="fas fa-book-quran"></i> Dzikir</a></li>
-                <li><a href="#statistik"><i class="fas fa-chart-bar"></i> Statistik</a></li>
-                <li><a href="#panduan"><i class="fas fa-info-circle"></i> Panduan</a></li>
-                <li><a href="#tentang"><i class="fas fa-question-circle"></i> Tentang</a></li>
+                <li><a href="#panduan"><i class="fas fa-info-circle"></i> Panduan & Tentang</a></li>
+                <li><a href="#faq"><i class="fas fa-question-circle"></i> FAQ</a></li>
             </ul>
         </div>
     </nav>
 
+    <!-- // KONTEN UTAMA -->
     <main class="container">
-        <!-- Section Beranda -->
+        <!-- SECTION BERANDA -->
         <section id="beranda" class="active-section">
             <div class="dhikr-card">
-                <h1>Digital Dhikr</h1>
+                <h1>TasbihKu</h1>
                 
+                <!-- // CONTROL TARGET DZIKIR -->
                 <div class="target-control">
                     <label for="target-input">Target Dzikir:</label>
                     <input type="number" id="target-input" min="1" value="33">
                     <button id="set-target">Set</button>
                 </div>
                 
+                <!-- // PILIHAN JENIS DZIKIR -->
                 <div class="dzikir-selector">
                     <select id="dzikir-type">
                         <option value="Subhanallah">Subhanallah</option>
                         <option value="Alhamdulillah">Alhamdulillah</option>
                         <option value="Allahu Akbar">Allahu Akbar</option>
                         <option value="Astaghfirullah">Astaghfirullah</option>
-                        <option value="custom">Tambah Dzikir Baru</option>
+                        <option value="Laa ilaaha illallah">Laa ilaaha illallah</option>
                     </select>
-                    <input type="text" id="custom-dzikir" placeholder="Nama dzikir baru" style="display:none;">
-                    <button id="add-dzikir">+</button>
                 </div>
                 
-                <div class="dhikr-wrapper">
-                    <div class="beads" id="beads-container"></div>
+                <!-- // VISUALISASI TASBIH DIGITAL -->
+                <div class="dhikr-container">
+                    <div class="dhikr-wrapper">
+                        <div class="beads" id="beads-container"></div>
+                        <div class="tail"></div>
+                    </div>
+                    <!-- // TOMBOL TENGAH (STATIS) -->
                     <div class="center-bead">
                         <div class="click-text">KLIK</div>
                     </div>
-                    <div class="tail"></div>
                 </div>
                 
+                <!-- // COUNTER DZIKIR -->
                 <div class="counter-display">
                     <span id="counter">0</span> / <span id="target-display">33</span>
                 </div>
                 
+                <!-- // PROGRESS BAR -->
                 <div class="progress-container">
                     <div class="progress-bar" id="progress-bar"></div>
                 </div>
                 
+                <!-- // TOMBOL CONTROL -->
                 <div class="controls">
                     <button id="reset-btn" class="btn-reset">
                         <i class="fas fa-redo"></i> Reset
                     </button>
                 </div>
+
+                <!-- // STATISTIK DZIKIR -->
+                <div class="stats-container">
+                    <div class="stat-card">
+                        <h3>Hari Ini</h3>
+                        <p id="todayCount">0</p>
+                        <small id="todayDate">-</small>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Minggu Ini</h3>
+                        <p id="weekCount">0</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Total</h3>
+                        <p id="totalCount">0</p>
+                    </div>
+                </div>
+                <div class="history-container">
+                    <h3><i class="fas fa-history"></i> Riwayat 5 Terakhir</h3>
+                    <ul id="recentHistory" class="history-list"></ul>
+                </div>
             </div>
         </section>
 
-        <!-- Section Dzikir -->
+        <!-- SECTION DAFTAR DZIKIR -->
         <section id="dzikir" class="hidden-section">
             <h2><i class="fas fa-book-quran"></i> Kumpulan Dzikir</h2>
             <div class="dzikir-list" id="dzikirListContainer">
-                <!-- Daftar dzikir akan diisi oleh JavaScript -->
+                <!-- Daftar dzikir diisi oleh JavaScript -->
             </div>
         </section>
 
-        <!-- Section Statistik -->
-        <section id="statistik" class="hidden-section">
-            <h2><i class="fas fa-chart-bar"></i> Statistik Dzikir</h2>
-            <div class="stats-container">
-                <div class="stat-card">
-                    <h3>Hari Ini</h3>
-                    <p id="todayCount">0</p>
-                    <small id="todayDate">-</small>
-                </div>
-                <div class="stat-card">
-                    <h3>Minggu Ini</h3>
-                    <p id="weekCount">0</p>
-                </div>
-                <div class="stat-card">
-                    <h3>Total</h3>
-                    <p id="totalCount">0</p>
-                </div>
-            </div>
-            <canvas id="dzikirChart" width="400" height="300"></canvas>
-            <div class="history-container">
-                <h3><i class="fas fa-history"></i> Riwayat 5 Terakhir</h3>
-                <ul id="recentHistory" class="history-list"></ul>
-            </div>
-        </section>
-
-        <!-- Section Panduan -->
+        <!-- SECTION PANDUAN & TENTANG -->
         <section id="panduan" class="hidden-section">
-            <h2><i class="fas fa-info-circle"></i> Panduan Penggunaan</h2>
+            <h2><i class="fas fa-info-circle"></i> Panduan & Tentang</h2>
             <div class="guide-container">
                 <div class="guide-card">
                     <h3><i class="fas fa-mobile-alt"></i> Cara Menggunakan</h3>
                     <ol>
-                        <li>Pilih dzikir dari dropdown atau tambahkan dzikir baru</li>
-                        <li>Atur target jumlah dzikir yang ingin dicapai</li>
-                        <li>Klik pada lingkaran dhikr untuk menambah hitungan</li>
-                        <li>Gunakan tombol reset untuk mengulang hitungan</li>
+                        <li>Pilih dzikir dari dropdown</li>
+                        <li>Atur target jumlah dzikir</li>
+                        <li>Klik pada lingkaran tasbih</li>
+                        <li>Reset untuk mengulang hitungan</li>
                     </ol>
                 </div>
                 <div class="guide-card">
-                    <h3><i class="fas fa-lightbulb"></i> Tips</h3>
+                    <h3><i class="fas fa-lightbulb"></i> Tips Berdzikir</h3>
                     <ul>
-                        <li>Anda bisa menggeser layar untuk navigasi menu</li>
-                        <li>Aktifkan mode getar untuk notifikasi saat target tercapai</li>
-                        <li>Statistik akan membantu melacak perkembangan ibadah</li>
+                        <li>Lakukan dengan khusyuk</li>
+                        <li>Rutinkan setiap pagi dan petang</li>
+                        <li>Fokuskan hati saat berdzikir</li>
                     </ul>
+                </div>
+                <div class="about-card">
+                    <h3>Tentang TasbihKu</h3>
+                    <p>Aplikasi penghitung dzikir digital untuk membantu ibadah harian.</p>
+                    <p><strong>Versi:</strong> 2.1.0</p>
                 </div>
             </div>
         </section>
 
-        <!-- Section Tentang -->
-        <section id="tentang" class="hidden-section">
-            <h2><i class="fas fa-question-circle"></i> Tentang Aplikasi</h2>
-            <div class="about-container">
-                <div class="about-card">
-                    <h3>Digital Dhikr</h3>
-                    <p>Aplikasi ini dikembangkan untuk memudahkan umat Muslim dalam berdzikir dan menghitung dhikr secara digital. Dengan antarmuka yang sederhana dan fitur yang lengkap, Anda dapat beribadah dengan lebih khusyuk.</p>
-                    <p><strong>Versi:</strong> 2.1.0</p>
-                    <p><strong>Fitur Baru:</strong> Animasi putar dan statistik lengkap</p>
+        <!-- SECTION FAQ -->
+        <section id="faq" class="hidden-section">
+            <h2><i class="fas fa-question-circle"></i> Pertanyaan Umum</h2>
+            <div class="faq-container">
+                <div class="faq-card">
+                    <h3>Bagaimana cara reset hitungan?</h3>
+                    <p>Gunakan tombol reset di bagian bawah counter.</p>
+                </div>
+                <div class="faq-card">
+                    <h3>Apakah data tersimpan?</h3>
+                    <p>Ya, data disimpan secara lokal di perangkat Anda.</p>
+                </div>
+                <div class="faq-card">
+                    <h3>Bisakah mengubah target?</h3>
+                    <p>Ya, melalui input target di bagian atas.</p>
                 </div>
             </div>
         </section>
     </main>
 
+    <!-- // NOTIFIKASI -->
     <div class="notification" id="notification"></div>
 
     <script src="script.js"></script>
